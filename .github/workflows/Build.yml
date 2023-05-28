@@ -1,0 +1,73 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  mingw-bundledlls_Ubuntu:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Get build timestamp
+      id: id_date
+      shell: bash
+      run: echo "timestamp=$(date +%Y-%m-%d-%H-%M-%S)" >> $GITHUB_OUTPUT
+
+    - name: Get app version
+      id: id_version
+      shell: bash
+      run: |
+         app_major_minor_patch=`grep -oP '(?<=VERSION \"v)[0-9.]+' mingw-bundledlls.c`
+         echo "app_version=v$app_major_minor_patch-${{steps.id_date.outputs.timestamp}}" >> $GITHUB_OUTPUT
+
+    - name: Build app
+      shell: bash
+      run: |
+         make
+
+    - name: Upload artifact
+      env: 
+        APP_VERSION: "${{steps.id_version.outputs.app_version}}"
+      uses: actions/upload-artifact@v3
+      with:
+        name: mingw-bundledlls_Ubuntu-${{env.APP_VERSION}}
+        path: ./
+
+  mingw-bundledlls_Windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+    - uses: actions/checkout@v3
+    - uses: msys2/setup-msys2@v2
+      with:
+          msystem: MINGW64
+          update: true
+          install: git mingw-w64-x86_64-make mingw-w64-x86_64-gcc
+
+    - name: Get build timestamp
+      id: id_date
+      run: echo "timestamp=$(date +%Y-%m-%d-%H-%M-%S)" >> $GITHUB_OUTPUT
+
+    - name: Get app version
+      id: id_version     
+      run: |
+         app_major_minor_patch=`grep -oP '(?<=VERSION \"v)[0-9.]+' mingw-bundledlls.c`
+         echo "app_version=v$app_major_minor_patch-${{steps.id_date.outputs.timestamp}}" >> $GITHUB_OUTPUT
+
+    - name: Build app
+      run: |
+         mingw32-make
+
+    - name: Upload artifact
+      env: 
+        APP_VERSION: "${{steps.id_version.outputs.app_version}}"
+      uses: actions/upload-artifact@v3
+      with:
+        name: mingw-bundledlls_Windows-${{env.APP_VERSION}}
+        path: ./
