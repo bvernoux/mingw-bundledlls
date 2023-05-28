@@ -1,7 +1,14 @@
 # mingw-bundledlls
 
-A convenient C native (Mingw-w64 or GNU/Linux gcc) app that copies all dependency DLLs next to the executable. Suitable for creating a ready-to-go application bundle for Windows. The script assumes Fedora 21 mingw32 install paths & Windows(mingw64), but that is easy to change.
+A convenient C native (Mingw-w64 or GNU/Linux gcc) app that copies all dependency DLLs next to the executable.
+
+Suitable for creating a ready-to-go application bundle for Windows.
+
+The application assumes Fedora 21 mingw32 install paths & Windows(mingw64), but that is easy to change.
+
 This C native application is a port/rewrite of original Martin Preisler Python3 script https://github.com/mpreisler/mingw-bundledlls
+
+[![Build](https://github.com/bvernoux/mingw-bundledlls/actions/workflows/Build.yml/badge.svg)](https://github.com/bvernoux/mingw-bundledlls/actions/workflows/Build.yml)
 
 ## Features
   - find all dependencies of an EXE or DLL file (recursively)
