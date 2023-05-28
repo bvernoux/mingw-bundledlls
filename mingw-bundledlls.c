@@ -27,7 +27,7 @@
 #endif
 
 #define APP_NAME "mingw-bundledlls"
-#define VERSION "v0.1.0 28/05/2023 B.VERNOUX"
+#define VERSION "v0.1.1 28/05/2023 B.VERNOUX"
 
 #define BANNER1 APP_NAME " " VERSION "\n"
 #define USAGE "usage: " APP_NAME " <exe_file> [--copy]\n"
@@ -152,7 +152,6 @@ int gatherDeps(const char* path, const char* path_prefixes[], int num_prefixes, 
 #else
 	FILE* pipe = popen(command, "r");
 #endif
-
 	if (!pipe) {
 		printf("Error executing objdump command.\n");
 		return 0;
@@ -195,7 +194,6 @@ int gatherDeps(const char* path, const char* path_prefixes[], int num_prefixes, 
 			}
 		}
 	}
-
 #ifdef _WIN32
 	_pclose(pipe);
 #else
@@ -267,8 +265,6 @@ void copyDeps(const char* exe_file, char* deps[], int num_deps) {
 			printf("Copying '%s' to '%s'\n", dep, target);
 			copyFile(dep, target);
 		}
-
-		free(dep);
 	}
 }
 
@@ -334,6 +330,9 @@ int main(int argc, char* argv[]) {
 			snprintf(destination, MAX_PATH_LENGTH, "%s", dirname(exe_file));
 			copyDeps(destination, deps, num_deps);
 		}
+		for (int i = 0; i < num_deps; i++) {
+			free(deps[i]);
+		}
 	}
 	else {
 		printf("No dependencies found.\n");
@@ -341,6 +340,13 @@ int main(int argc, char* argv[]) {
 
 	freeHashMap(&seen);
 	freeHashMap(&blacklist);
+
+	if (env_path_prefixes != NULL) {
+		for (int i = 0; i < num_prefixes; i++) {
+			free((char*)path_prefixes[i]);
+		}
+		free((char**)path_prefixes);
+	}
 
 	return 0;
 }
