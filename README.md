@@ -24,7 +24,7 @@ This C native application is a port/rewrite of original Martin Preisler Python3 
 ## Usage
 
 ```
-usage: mingw-bundledlls [--copy] exe_file
+usage: mingw-bundledlls exe_file [--copy]
 
 positional arguments:
   exe_file    EXE or DLL file that you need to bundle dependencies for
@@ -37,7 +37,7 @@ optional arguments:
 
 ## Example
 ```
-$ ./mingw-bundledlls --copy ./scap-workbench/scap-workbench.exe 
+$ ./mingw-bundledlls ./scap-workbench/scap-workbench.exe --copy
 /usr/i686-w64-mingw32/sys-root/mingw/bin/libssh2-1.dll
 /usr/i686-w64-mingw32/sys-root/mingw/bin/QtNetwork4.dll
 /usr/i686-w64-mingw32/sys-root/mingw/bin/libcrypto-10.dll
