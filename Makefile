@@ -13,7 +13,7 @@ endif
 CFLAGS=-c -Wall -O3
 STRIP_EXE=strip
 
-OBJ=mingw-bundledlls.o
+OBJ=mingw-bundledlls.o Find_DLL_Dependencies.o
 
 all: $(EXEC)
 

@@ -1,4 +1,4 @@
-/* gcc -Wall -O3 -o mingw-bundledlls mingw-bundledlls.c see also Makefile
+/* gcc -Wall -O3 -o mingw-bundledlls mingw-bundledlls.c Find_DLL_Dependencies.c see also Makefile
  * Python3 version of mingw-bundledlls https://github.com/mpreisler/mingw-bundledlls
  *
  * Copyright (c) 2015 Martin Preisler (Python2 / Python3 version)
@@ -26,8 +26,12 @@
 #define PATH_SEPARATOR "/"
 #endif
 
+/* External static lib from file Find_DLL_Dependencies.c */
+extern int Find_DLL_Dependencies(const char* filename, char* dependencies[], size_t num_dependencies);
+extern void Free_DLL_Dependencies(char* dependencies[], size_t num_dependencies);
+
 #define APP_NAME "mingw-bundledlls"
-#define VERSION "v0.1.1 28/05/2023 B.VERNOUX"
+#define VERSION "v0.2.0 29/05/2023 B.VERNOUX"
 
 #define BANNER1 APP_NAME " " VERSION "\n"
 #define USAGE "usage: " APP_NAME " <exe_file> [--copy]\n"
@@ -36,7 +40,6 @@
 
 #define MAX_PATH_LENGTH 1024
 #define MAX_DEPS 10000
-#define MAX_COMMAND_LENGTH 1024
 
 const char* DEFAULT_PATH_PREFIXES[] = {
 	"", "/usr/bin", "/usr/i686-w64-mingw32/sys-root/mingw/bin", "/mingw64/bin",
@@ -144,26 +147,16 @@ char* findFullPath(const char* filename, const char* path_prefixes[], int num_pr
 int gatherDeps(const char* path, const char* path_prefixes[], int num_prefixes, HashMap* seen, char* deps[]) {
 	int num_deps = 0;
 
-	char command[MAX_COMMAND_LENGTH + 1];
-	snprintf(command, MAX_COMMAND_LENGTH, "objdump -p %s", path);
-
-#ifdef _WIN32
-	FILE* pipe = _popen(command, "r");
-#else
-	FILE* pipe = popen(command, "r");
-#endif
-	if (!pipe) {
-		printf("Error executing objdump command.\n");
+	char* dependencies[MAX_DEPS]; // Adjust the array size as per your requirements
+	size_t num_dependencies = ARRAY_LENGTH(dependencies);
+	int num_dll_deps = Find_DLL_Dependencies(path, dependencies, num_dependencies);
+	if (num_dll_deps < 1) {
+		printf("Error Find_DLL_Dependencies() return %d\n", num_dll_deps);
 		return 0;
 	}
 
-	char line[MAX_COMMAND_LENGTH + 1];
-	while (fgets(line, MAX_COMMAND_LENGTH, pipe) != NULL) {
-		if (strncmp(line, "\tDLL Name: ", 11) != 0)
-			continue;
-
-		char* dep = line + 11;
-		dep[strcspn(dep, "\n")] = '\0';
+	for (size_t dll_deps_idx = 0; dll_deps_idx < num_dll_deps; dll_deps_idx++) {
+		char* dep = dependencies[dll_deps_idx];
 		char ldep[MAX_PATH_LENGTH + 1];
 		strncpy(ldep, dep, MAX_PATH_LENGTH);
 		for (int i = 0; ldep[i]; i++) {
@@ -179,14 +172,14 @@ int gatherDeps(const char* path, const char* path_prefixes[], int num_prefixes, 
 		if (already_seen) {
 			continue;
 		}
-		
+
 		char buffer[MAX_PATH_LENGTH + 1];
 		char* dep_path = findFullPath(dep, path_prefixes, num_prefixes, buffer);
 		if (dep_path) {
 			if(num_deps < MAX_DEPS)
 			{
 				put(seen, ldep, true);
-				deps[num_deps++] = strdup(dep_path);			
+				deps[num_deps++] = strdup(dep_path);
 				int subdeps = gatherDeps(dep_path, path_prefixes, num_prefixes, seen, &deps[num_deps]);
 				num_deps += subdeps;
 			} else {
@@ -194,12 +187,15 @@ int gatherDeps(const char* path, const char* path_prefixes[], int num_prefixes, 
 			}
 		}
 	}
-#ifdef _WIN32
-	_pclose(pipe);
-#else
-	pclose(pipe);
-#endif
+	Free_DLL_Dependencies(dependencies, num_dll_deps);
 	return num_deps;
+}
+
+/* Free all memory allocated in gatherDeps() char* deps[], int num_deps */
+void freeDeps(char* deps[], int num_deps) {
+	for (int i = 0; i < num_deps; i++) {
+		free(deps[i]);
+	}
 }
 
 void copyFile(const char* source, const char* destination) {
@@ -282,7 +278,7 @@ int main(int argc, char* argv[]) {
 
 	const char* env_path_prefixes = getenv("MINGW_BUNDLEDLLS_SEARCH_PATH");
 	if (env_path_prefixes != NULL) {
-		int count = 0;	
+		int count = 0;
 		char* env_copy = strdup(env_path_prefixes);
 		char* path = strtok(env_copy, ";");
 		while (path != NULL) {
@@ -293,7 +289,7 @@ int main(int argc, char* argv[]) {
 
 		num_prefixes = count;
 		path_prefixes = (const char**)malloc(num_prefixes * sizeof(const char*));
-		env_copy = strdup(env_path_prefixes);		
+		env_copy = strdup(env_path_prefixes);
 		path = strtok(env_copy, ";");
 		int i = 0;
 		while (path != NULL) {
@@ -319,7 +315,6 @@ int main(int argc, char* argv[]) {
 
 	char* deps[MAX_DEPS + 1];
 	int num_deps = gatherDeps(exe_file, path_prefixes, num_prefixes, &seen, deps);
-
 	if (num_deps > 0) {
 		printf("Dependencies(%d):\n", num_deps);
 		for (int i = 0; i < num_deps; i++) {
@@ -330,9 +325,7 @@ int main(int argc, char* argv[]) {
 			snprintf(destination, MAX_PATH_LENGTH, "%s", dirname(exe_file));
 			copyDeps(destination, deps, num_deps);
 		}
-		for (int i = 0; i < num_deps; i++) {
-			free(deps[i]);
-		}
+		freeDeps(deps, num_deps);
 	}
 	else {
 		printf("No dependencies found.\n");

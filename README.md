@@ -14,9 +14,6 @@ This C native application is a port/rewrite of original Martin Preisler Python3 
   - find all dependencies of an EXE or DLL file (recursively)
   - copy all dependencies next to the EXE or DLL
 
-## Requirements
-  - objdump in $PATH
-
 ## Environment Variables
   - `$MINGW_BUNDLEDLLS_SEARCH_PATH`: Colon-separated list of paths to search for DLLs
      - Note if MINGW_BUNDLEDLLS_SEARCH_PATH is not found the application use DEFAULT_PATH_PREFIXES see source code for more details
