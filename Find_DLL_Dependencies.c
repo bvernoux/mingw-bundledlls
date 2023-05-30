@@ -1,5 +1,5 @@
 /*
- * Find_DLL_Dependencies B.VERNOUX 29 May 2023
+ * Find_DLL_Dependencies
  * Copyright (C) 2023 Benjamin VERNOUX
  * MIT License (MIT)
 */
@@ -22,8 +22,6 @@
 #define USAGE "usage: " APP_NAME " <win32_64_exe_or_dll>\n"
 
 #define ARRAY_LENGTH(array) (sizeof((array))/sizeof((array)[0]))
-
-#define MAX_DEPS 10000
 
 /* Support only Windows x86 & x64 EXE/DLL */
 #define IMAGE_FILE_MACHINE_I386 (0x014c) // x86
@@ -256,7 +254,7 @@ int Find_DLL_Dependencies(const char* filename, char* dependencies[], size_t num
 		default:
 		{
 			fclose(file);
-			return -6; // Image file machine not supported
+			return -5; // Image file machine not supported
 		}
 	}
 
@@ -274,12 +272,12 @@ int Find_DLL_Dependencies(const char* filename, char* dependencies[], size_t num
 	}
 	if (i == FileHeader_NumberOfSections) {
 		fclose(file);
-		return -5; /* Error on nt_headers32 or nt_headers64 => FileHeader.NumberOfSections */
+		return 0; /* No dependencies found / nt_headers32 or nt_headers64 => FileHeader.NumberOfSections */
 	}
 
 	if (import_directory.VirtualAddress == 0 || import_directory.Size == 0) {
 		fclose(file);
-		return -7; /* Error import_directory invalid data */
+		return 0; /* No dependencies found / Error import_directory invalid data */
 	}
 
 	long fileoffset_import_descriptor = section_header.PointerToRawData + (import_directory.VirtualAddress - section_header.VirtualAddress);
@@ -333,6 +331,7 @@ void Free_DLL_Dependencies(char* dependencies[], size_t num_dependencies)
 /*
 int main(int argc, char* argv[]) {
 
+	#define MAX_DEPS 10000
 	printf(BANNER1);
 
 	if (argc < 2) {
