@@ -163,8 +163,6 @@ Dependency 'C:/msys64/home/bvern/scopehal-apps/build/dist/windows_x64/libscopepr
 $ export MINGW_BUNDLEDLLS_SEARCH_PATH="C:\msys64\mingw64\bin;C:\Program Files\ImHex"
 $ ./mingw-bundledlls 'C:\Program Files\ImHex\ImHex.exe'
 mingw-bundledlls v0.2.1 30/05/2023 B.VERNOUX
-Dependencies(4):
-mingw-bundledlls v0.2.1 30/05/2023 B.VERNOUX
 Dependencies(28):
 C:\msys64\mingw64\bin\libgcc_s_seh-1.dll
 C:\msys64\mingw64\bin\libwinpthread-1.dll
