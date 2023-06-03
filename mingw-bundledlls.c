@@ -35,14 +35,16 @@ extern int Find_DLL_Dependencies(const char* filename, char* dependencies[], siz
 extern void Free_DLL_Dependencies(char* dependencies[], size_t num_dependencies);
 
 #define APP_NAME "mingw-bundledlls"
-#define VERSION "v0.2.2 03/06/2023 B.VERNOUX"
+#define VERSION "v0.2.3 03/06/2023 B.VERNOUX"
 
 #define BANNER1 APP_NAME " " VERSION "\n"
 #define USAGE "usage: " APP_NAME " <exe_file> [--copy] [--verbose]\n"
 
 #define ARRAY_LENGTH(array) (sizeof((array))/sizeof((array)[0]))
 
-#define MAX_PATH_LENGTH 1024
+#define MAX_FILE_LENGTH 256
+#define MAX_DIR_LENGTH 767
+#define MAX_PATH_LENGTH 1024 // MAX_DIR_LENGTH(767) + PATH_SEPARATOR(1)+ MAX_FILE_LENGTH(256)
 #define MAX_DEPS 10000
 #define MAX_GATHERDEPS 1000
 
@@ -183,8 +185,8 @@ int gatherDeps(const char* path, const char* path_prefixes[], int num_prefixes, 
 
 	for (int dll_deps_idx = 0; dll_deps_idx < num_dll_deps; dll_deps_idx++) {
 		char* dep = dependencies[dll_deps_idx];
-		char ldep[MAX_PATH_LENGTH + 1];
-		strncpy(ldep, dep, MAX_PATH_LENGTH);
+		char ldep[MAX_FILE_LENGTH + 1] = { 0 };
+		strncpy(ldep, dep, MAX_FILE_LENGTH);
 		for (int i = 0; ldep[i]; i++) {
 			ldep[i] = tolower(ldep[i]);
 		}
@@ -207,7 +209,7 @@ int gatherDeps(const char* path, const char* path_prefixes[], int num_prefixes, 
 			continue;
 		}
 
-		char buffer[MAX_PATH_LENGTH + 1];
+		char buffer[MAX_PATH_LENGTH + 1] = { 0 };
 		char* dep_path = findFullPath(dep, path_prefixes, num_prefixes, buffer);
 		if (dep_path) {
 			if(num_deps < MAX_DEPS)
@@ -285,9 +287,9 @@ void copyFile(const char* source, const char* destination) {
 #endif
 }
 
-void copyDeps(const char* exe_file, char* deps[], int num_deps) {
+void copyDeps(const char* dest_dir, char* deps[], int num_deps) {
 	char exe_dir[MAX_PATH_LENGTH + 1] = { 0 };
-	strncpy(exe_dir, exe_file, MAX_PATH_LENGTH);
+	strncpy(exe_dir, dest_dir, MAX_PATH_LENGTH);
 
 	for (int i = 0; i < num_deps; i++) {
 		char* dep = deps[i];
@@ -394,9 +396,9 @@ int main(int argc, char* argv[]) {
 	if (num_deps > 0) {
 		printf("Dependencies(%d):\n", num_deps);
 		if (copy_files) { // Copy all dependencies
-			char destination[MAX_PATH_LENGTH + 1] = { 0 };
-			snprintf(destination, MAX_PATH_LENGTH, "%s", dirname(exe_file));
-			copyDeps(destination, deps, num_deps);
+			char dest_dir[MAX_DIR_LENGTH + 1] = { 0 };
+			snprintf(dest_dir, MAX_DIR_LENGTH, "%s", dirname(exe_file));
+			copyDeps(dest_dir, deps, num_deps);
 		} else { // Display all dependencies
 			for (int i = 0; i < num_deps; i++) {
 				printf("%s\n", deps[i]);
