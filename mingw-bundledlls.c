@@ -35,7 +35,7 @@ extern int Find_DLL_Dependencies(const char* filename, char* dependencies[], siz
 extern void Free_DLL_Dependencies(char* dependencies[], size_t num_dependencies);
 
 #define APP_NAME "mingw-bundledlls"
-#define VERSION "v0.2.1 30/05/2023 B.VERNOUX"
+#define VERSION "v0.2.2 03/06/2023 B.VERNOUX"
 
 #define BANNER1 APP_NAME " " VERSION "\n"
 #define USAGE "usage: " APP_NAME " <exe_file> [--copy] [--verbose]\n"
@@ -286,12 +286,12 @@ void copyFile(const char* source, const char* destination) {
 }
 
 void copyDeps(const char* exe_file, char* deps[], int num_deps) {
-	char exe_dir[MAX_PATH_LENGTH + 1];
+	char exe_dir[MAX_PATH_LENGTH + 1] = { 0 };
 	strncpy(exe_dir, exe_file, MAX_PATH_LENGTH);
 
 	for (int i = 0; i < num_deps; i++) {
 		char* dep = deps[i];
-		char target[MAX_PATH_LENGTH + 1];
+		char target[MAX_PATH_LENGTH + 1] = { 0 };
 		/* Detect path separator */
 		char* PATH_SEPARATOR;
 		if(strstr(exe_dir, PATH_SEPARATOR_WINDOWS) != NULL) {
@@ -394,7 +394,7 @@ int main(int argc, char* argv[]) {
 	if (num_deps > 0) {
 		printf("Dependencies(%d):\n", num_deps);
 		if (copy_files) { // Copy all dependencies
-			char destination[MAX_PATH_LENGTH + 1];
+			char destination[MAX_PATH_LENGTH + 1] = { 0 };
 			snprintf(destination, MAX_PATH_LENGTH, "%s", dirname(exe_file));
 			copyDeps(destination, deps, num_deps);
 		} else { // Display all dependencies

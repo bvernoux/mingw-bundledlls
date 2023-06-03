@@ -16,7 +16,7 @@
 #include <string.h>
 
 #define APP_NAME "Find_DLL_Dependencies"
-#define VERSION "v0.1.0 29/05/2023 B.VERNOUX"
+#define VERSION "v0.1.1 03/06/2023 B.VERNOUX"
 
 #define BANNER1 APP_NAME " " VERSION "\n"
 #define USAGE "usage: " APP_NAME " <win32_64_exe_or_dll>\n"
@@ -69,8 +69,8 @@ typedef struct _IMAGE_FILE_HEADER {
 } IMAGE_FILE_HEADER;
 
 typedef struct _IMAGE_DATA_DIRECTORY {
-  uint32_t VirtualAddress;
-  uint32_t Size;
+	uint32_t VirtualAddress;
+	uint32_t Size;
 } IMAGE_DATA_DIRECTORY;
 
 #define IMAGE_NUMBEROF_DIRECTORY_ENTRIES 16
@@ -280,9 +280,9 @@ int Find_DLL_Dependencies(const char* filename, char* dependencies[], size_t num
 		return 0; /* No dependencies found / Error import_directory invalid data */
 	}
 
+	IMAGE_IMPORT_DESCRIPTOR import_descriptor;
 	long fileoffset_import_descriptor = section_header.PointerToRawData + (import_directory.VirtualAddress - section_header.VirtualAddress);
 	while (1) {
-		IMAGE_IMPORT_DESCRIPTOR import_descriptor;
 		if(fseek(file, fileoffset_import_descriptor, SEEK_SET) != 0) {
 			Find_DLL_Dependencies_file_error_exit(file);
 		}
@@ -299,16 +299,10 @@ int Find_DLL_Dependencies(const char* filename, char* dependencies[], size_t num
 			if(fseek(file, section_header.PointerToRawData + (import_descriptor.Name - section_header.VirtualAddress), SEEK_SET) != 0) {
 				Find_DLL_Dependencies_file_error_exit(file);
 			}
-			char dll_name[DLL_NAME_MAX_SIZE];
+			char dll_name[DLL_NAME_MAX_SIZE + 1] = { 0 };
 			fread_nb = fread(dll_name, 1, DLL_NAME_MAX_SIZE, file);
 			if(fread_nb != DLL_NAME_MAX_SIZE) {
 				Find_DLL_Dependencies_file_error_exit(file);
-			}
-			size_t j;
-			for (j = 0; j < DLL_NAME_MAX_SIZE; j++) {
-				if (dll_name[j] == '\0') {
-					break;
-				}
 			}
 			dependencies[nb_dependencies++] = strdup(dll_name);
 		} else {
@@ -340,7 +334,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	const char* filename = argv[1];
-	char* dependencies[MAX_DEPS]; // Adjust the array size as per your requirements
+	char* dependencies[MAX_DEPS] = { 0 }; // Adjust the array size as per your requirements
 	size_t num_dependencies = ARRAY_LENGTH(dependencies);
 
 	int num_deps = Find_DLL_Dependencies(filename, dependencies, num_dependencies);
