@@ -2,16 +2,13 @@
 EXEC=mingw-bundledlls
 
 ifeq ($(OS),Windows_NT)
-	CC=gcc
-	LDFLAGS=-fno-exceptions
 	EXEC:=$(EXEC).exe
-else
-	CC=gcc
-	LDFLAGS=-fno-exceptions
 endif
 
+CC=gcc
+LDFLAGS=-fno-exceptions -s
+
 CFLAGS=-c -Wall -O3
-STRIP_EXE=strip
 
 OBJ=mingw-bundledlls.o Find_DLL_Dependencies.o
 
@@ -19,7 +16,6 @@ all: $(EXEC)
 
 $(EXEC): $(OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
-	$(STRIP_EXE) $(EXEC)
 
 %.o: %.c
 	$(CC) -o $@ -c $< $(CFLAGS)
