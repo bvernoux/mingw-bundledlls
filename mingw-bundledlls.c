@@ -11,23 +11,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <ctype.h>
-#include <libgen.h>
-
-#ifdef _WIN32
-#include <windows.h>
-#include <io.h>
-#include <sys/stat.h>
-#include <sys/utime.h>
-#else
-#define __USE_LARGEFILE64
-#define _LARGEFILE_SOURCE
-#define _LARGEFILE64_SOURCE
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <time.h>
-#include <fcntl.h>
-#endif
+#include <libgen.h> /* Required for dirname() / basename() GNU/Linux or MinGW */
 
 #define BUFFER_FILE_COPY (2048*1024)
 unsigned char buffer_file_copy[BUFFER_FILE_COPY];
@@ -40,7 +24,7 @@ extern int Find_DLL_Dependencies(const char* filename, char* dependencies[], siz
 extern void Free_DLL_Dependencies(char* dependencies[], size_t num_dependencies);
 
 #define APP_NAME "mingw-bundledlls"
-#define VERSION "v0.2.4 05/06/2023 B.VERNOUX"
+#define VERSION "v0.2.4 07/06/2023 B.VERNOUX"
 
 #define BANNER1 APP_NAME " " VERSION "\n"
 #define USAGE "usage: " APP_NAME " <exe_file> [--copy] [--verbose]\n"
@@ -273,25 +257,6 @@ void copyFile(const char* source, const char* destination) {
 
 	fclose(sourceFile);
 	fclose(destFile);
-
-#ifdef _WIN32
-	// Set the same access and modification time for the destination file as the source file
-	struct _stat64 sourceStat;
-	if (_stat64(source, &sourceStat) == 0) {
-		_utime64(destination, (struct __utimbuf64*)&sourceStat.st_atime);
-	}
-#else
-	// Set the same access and modification time for the destination file as the source file
-	struct stat64 sourceStat;
-	if (stat64(source, &sourceStat) == 0) {
-		struct timespec times[2];
-		times[0].tv_sec = sourceStat.st_atim.tv_sec;
-		times[0].tv_nsec = sourceStat.st_atim.tv_nsec;
-		times[1].tv_sec = sourceStat.st_mtim.tv_sec;
-		times[1].tv_nsec = sourceStat.st_mtim.tv_nsec;
-		utimensat(AT_FDCWD, destination, times, 0);
-	}
-#endif
 }
 
 void copyDeps(const char* dest_dir, char* deps[], int num_deps) {
